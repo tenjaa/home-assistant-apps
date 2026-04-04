@@ -8,4 +8,4 @@ A collection of Home Assistant apps.
 
 ### [tiny-TRMNL](./tiny-trmnl)
 
-A tiny TRMNL webserver for Home Assistant. **Not affiliated with TRMNL.**
+A tiny [TRMNL](https://trmnl.com/) webserver for Home Assistant. **Not affiliated with [TRMNL](https://trmnl.com/).**
