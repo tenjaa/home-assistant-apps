@@ -27,4 +27,4 @@ schema:
   calendars:
   - entity: str
     label: str
-image: "tenjaa/tiny-trmnl-home-assistant"
+image: "ghcr.io/tenjaa/tiny-trmnl-home-assistant"

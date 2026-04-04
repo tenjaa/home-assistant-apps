@@ -95,8 +95,7 @@ jobs:
       uses: home-assistant/builder/actions/build-image@2026.03.2
       with:
         arch: ${{ matrix.arch }}
-        container-registry: docker.io
-        container-registry-password: ${{ secrets.DOCKERHUB_TOKEN }}
+        container-registry-password: ${{ secrets.GITHUB_TOKEN }}
         context: "./${{ inputs.app }}"
         image: ${{ matrix.image }}
         image-tags: |
@@ -124,8 +123,7 @@ jobs:
       uses: home-assistant/builder/actions/publish-multi-arch-manifest@2026.03.2
       with:
         architectures: ${{ needs.prepare.outputs.architectures }}
-        container-registry: docker.io
-        container-registry-password: ${{ secrets.DOCKERHUB_TOKEN }}
+        container-registry-password: ${{ secrets.GITHUB_TOKEN }}
         image-name: ${{ needs.prepare.outputs.image_name }}
         image-tags: |
           ${{ needs.prepare.outputs.version }}
