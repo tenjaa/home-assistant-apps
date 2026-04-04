@@ -4,3 +4,9 @@ updates:
   directory: "/"
   schedule:
     interval: weekly
+
+# tiny-trmnl
+- package-ecosystem: "npm"
+  directory: "/tiny-trmnl"
+  schedule:
+    interval: weekly
