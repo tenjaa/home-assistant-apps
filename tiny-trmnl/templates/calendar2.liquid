@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://trmnl.com/css/latest/plugins.css">
+    <script src="https://trmnl.com/js/latest/plugins.js"></script>
+    <style>
+        .t-item {
+            break-inside: avoid;
+            margin-bottom: 16px;
+        }
+
+        .cal-day-header {
+            text-transform: uppercase;
+            border-bottom: 2px solid #000;
+            padding-bottom: 1px;
+            margin-bottom: 2px;
+        }
+    </style>
+</head>
+<body class="environment trmnl">
+<div class="screen">
+    <div class="view view--full">
+        <div class="layout layout--col">
+            <div class="columns" data-overflow-cols="3"  style="max-height: 410px; gap: 10.5px;">
+                <div class="column">
+                    {% for day in days %}
+                        <div class="t-item" style="all: revert;">
+                            <div class="mb--1.5">
+                                <span class="title title--small cal-day-header">{{ day.header }}</span>
+                            </div>
+                            {% for entry in day.entries %}
+                                <div class="item mb--1.5 {% if entry.allDay %}item--emphasis-1{% endif %}">
+                                    <div class="meta">
+                                        <span class="index">{{ entry.label }}</span>
+                                    </div>
+                                    <div class="content">
+                                        <span class="title title--small">{{ entry.title }}</span>
+                                        {% comment %}<span class="description">Description?</span>{% endcomment %}
+                                        <div class="flex gap--small">
+                                            {% if entry.until %}
+                                                <span class="label label--small label--underline">{{ entry.until }}</span>
+                                            {% endif %}
+                                            {% if entry.time %}
+                                                <span class="label label--small label--underline">{{ entry.time }}</span>
+                                            {% endif %}
+                                            {% if entry.location %}
+                                                <span class="label label--small label--underline">{{ entry.location }}</span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

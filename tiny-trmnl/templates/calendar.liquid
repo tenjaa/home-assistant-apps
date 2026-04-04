@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://trmnl.com/css/2.3.7/plugins.css">
+    <script src="https://trmnl.com/js/2.3.7/plugins.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .screen,
+        .view--full,
+        .layout {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .layout {
+            display: block;
+            padding-top: 0 !important;
+            align-content: start;
+        }
+
+        .container {
+            column-count: 3;
+            column-gap: 16px;
+            column-fill: auto;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .t-item {
+            break-inside: avoid;
+            margin-bottom: 16px;
+        }
+
+        .cal-day-header {
+            text-transform: uppercase;
+            border-bottom: 2px solid #000;
+            padding-bottom: 1px;
+            margin-bottom: 2px;
+        }
+    </style>
+</head>
+<body class="environment trmnl">
+<div class="screen">
+    <div class="view view--full">
+        <div class="layout">
+            <div class="container">
+                {% for day in days %}
+                    <div class="t-item">
+                        <div class="mb--1.5">
+                            <span class="title title--small cal-day-header">{{ day.header }}</span>
+                        </div>
+                        {% for entry in day.entries %}
+                            <div class="item mb--1.5 {% if entry.allDay %}item--emphasis-1{% endif %}">
+                                <div class="meta">
+                                    <span class="index">{{ entry.label }}</span>
+                                </div>
+                                <div class="content">
+                                    <span class="title title--small">{{ entry.title }}</span>
+                                    {% comment %}<span class="description">Description?</span>{% endcomment %}
+                                    <div class="flex gap--small">
+                                        {% if entry.until %}
+                                            <span class="label label--small label--underline">{{ entry.until }}</span>
+                                        {% endif %}
+                                        {% if entry.time %}
+                                            <span class="label label--small label--underline">{{ entry.time }}</span>
+                                        {% endif %}
+                                        {% if entry.location %}
+                                            <span class="label label--small label--underline">{{ entry.location }}</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+</body>
+</html>

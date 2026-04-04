@@ -1,0 +1,30 @@
+# https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
+name: tiny-TRMNL add-on
+version: "0.0.1"
+slug: tiny-trmnl
+description: local TRMNL server for Home Assistant
+url: "https://github.com/tenjaa/homeassistant-apps/tree/main/tiny-trmnl"
+arch:
+  - aarch64
+init: false
+ports:
+  8080/tcp: 8080
+ports_description:
+  8080/tcp: "tiny-TRMNL HTTP server"
+map:
+  - share:rw
+options:
+  home_assistant_token: null
+  home_assistant_base_url: "http://homeassistant.local:8123"
+  base_url: "http://localhost:8080"
+  calendars:
+  - entity: calendar.my_calendar
+    label: "A"
+schema:
+  home_assistant_token: "str"
+  home_assistant_base_url: "str?"
+  base_url: "str?"
+  calendars:
+  - entity: str
+    label: str
+image: "tenjaa/tiny-trmnl-home-assistant"
