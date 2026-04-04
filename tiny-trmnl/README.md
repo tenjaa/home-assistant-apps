@@ -1,19 +1,6 @@
-# tiny-trmnl
-A very tiny trmnl webserver without any database or other complex needs
+# tiny-TRMNL
 
-## Configuration
+A tiny TRMNL webserver for Home Assistant.
+No database (maybe a tiny database like SQLite in the future), no complexity (maybe a little bit of complexity in the future).
 
-This project reads configuration from environment variables.
-
-- `HOME_ASSISTANT_TOKEN` (required)
-- `CALENDARS` (required JSON object)
-- `HOME_ASSISTANT_BASE_URL` (optional, defaults to `http://homeassistant.local:8123`)
-
-Example:
-
-```zsh
-export HOME_ASSISTANT_TOKEN='your-token'
-export CALENDARS='{"N":{"entity":"calendar.name1"},"M":{"entity":"calendar.name2"}}'
-export HOME_ASSISTANT_BASE_URL='http://homeassistant.local:8123'
-```
-
+**Disclaimer:** This project is not affiliated with, endorsed by, or associated with TRMNL. It is an independent implementation.
