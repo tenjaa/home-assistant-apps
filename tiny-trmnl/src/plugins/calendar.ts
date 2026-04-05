@@ -1,4 +1,6 @@
-import type { CalendarEvent } from './homeassistant.ts';
+import * as z from 'zod';
+import type { CalendarEvent, HomeAssistantApi } from '../home-assistant.ts';
+import type { Plugin } from './plugin-factory.ts';
 
 interface DayEntry {
   allDay?: boolean;
@@ -28,11 +30,11 @@ function getEventTitle(summary: string | null | undefined): string {
   return trimmedSummary ? trimmedSummary : getRandomUntitledEventTitle();
 }
 
-export function toDateKey(d: Date): string {
+function toDateKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export function formatHeader(date: Date, todayKey: string): string {
+function formatHeader(date: Date, todayKey: string): string {
   const formatted = new Intl.DateTimeFormat('en-US', {
     weekday: 'short',
     month: 'short',
@@ -141,15 +143,11 @@ function deduplicateEntries(entries: DayEntry[]): DayEntry[] {
   return deduplicatedEntries;
 }
 
-export function buildCalendarData(
-  sources: { events: CalendarEvent[]; label: string }[],
-) {
+function buildCalendarData(sources: { events: CalendarEvent[]; label: string }[]) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const todayKey = toDateKey(today);
-
-  // Single shared day map keyed by YYYY-MM-DD — all sources feed into it
   const dayMap = new Map<string, { date: Date; entries: DayEntry[] }>();
 
   for (const { events, label } of sources) {
@@ -162,7 +160,6 @@ export function buildCalendarData(
     }
   }
 
-  // Sort days chronologically, sort entries within each day
   const days = [...dayMap.entries()]
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, { date, entries }]) => {
@@ -180,4 +177,35 @@ export function buildCalendarData(
     });
 
   return { days };
+}
+
+export const ZodCalendarPluginConfig = z.object({
+  calendars: z.array(
+    z.object({
+      label: z.string().length(1),
+      entity: z.string(),
+    }),
+  ),
+});
+type CalendarPluginConfig = z.infer<typeof ZodCalendarPluginConfig>;
+
+export class CalendarPlugin implements Plugin {
+  readonly pluginId = 'calendar';
+
+  constructor(
+    readonly screenId: string,
+    private readonly ha: HomeAssistantApi,
+    private readonly config: CalendarPluginConfig,
+  ) {}
+
+  async getData(): Promise<object> {
+    const sources = await Promise.all(
+      this.config.calendars.map(async ({ entity, label }) => ({
+        events: await this.ha.fetchCalendarEvents(entity),
+        label,
+      })),
+    );
+
+    return buildCalendarData(sources);
+  }
 }

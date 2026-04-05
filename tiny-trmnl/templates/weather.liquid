@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://trmnl.com/css/2.3.7/plugins.css">
+    <script src="https://trmnl.com/js/2.3.7/plugins.js"></script>
+</head>
+<body class="environment trmnl">
+<div class="screen">
+    <div class="view view--full">
+        <div class="layout layout--row">
+            <div class="columns">
+                <div class="column">
+                    <div class="item mb--2">
+                        <div class="meta"></div>
+                        <div class="content">
+                            <span class="title title--large">{{ location }}</span>
+                            <span class="description">{{ current.condition }}</span>
+                        </div>
+                    </div>
+
+                    <div class="item mb--1">
+                        <div class="meta">
+                            <span class="label label--small">Now</span>
+                        </div>
+                        <div class="content">
+                            <span class="value value--tnums">{{ current.temperatureC | round }} C</span>
+                            <span class="label">Feels like {{ current.feelsLikeC | round }} C</span>
+                        </div>
+                    </div>
+
+                    <div class="item mb--1">
+                        <div class="meta">
+                            <span class="label label--small">Today</span>
+                        </div>
+                        <div class="content">
+                            <span class="label">High {{ today.highC | round }} C, Low {{ today.lowC | round }} C</span>
+                            <span class="label">Rain chance {{ today.precipitationChancePercent }}%</span>
+                        </div>
+                    </div>
+
+                    <div class="item">
+                        <div class="meta">
+                            <span class="label label--small">Wind</span>
+                        </div>
+                        <div class="content">
+                            <span class="label">{{ current.windSpeedKmh | round }} km/h</span>
+                            <span class="label">Updated {{ current.updatedAt }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="title_bar">
+            <span class="title">Weather</span>
+            <span class="instance">{{ instance_id }}</span>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+

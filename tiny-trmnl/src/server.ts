@@ -1,74 +1,96 @@
 import { randomUUID } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
-import { firefox } from 'playwright';
-import { BASE_URL } from './homeassistant.ts';
-import { convertImage } from './image-magick.ts';
-import { renderCalendarHtml } from './liquid.ts';
+import { Liquid } from 'liquidjs';
+import { HomeAssistantApi } from './home-assistant.ts';
+import { Orchestrator } from './orchestrator.ts';
+import { PluginFactory } from './plugins/plugin-factory.ts';
 
-const REFRESH_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
-
-let cachedImage: Buffer | null = null;
-
-async function generateImage(): Promise<Buffer> {
-  console.log('Generating image...');
-  const startMs = Date.now();
-  const browser = await firefox.launch();
-  console.log(`Browser launched (${Date.now() - startMs}ms)`);
-  const context = await browser.newContext({
-    screen: { height: 480, width: 800 },
-    viewport: { height: 480, width: 800 },
-  });
-  const page = await context.newPage();
-  const html = await renderCalendarHtml();
-  console.log(`HTML rendered (${Date.now() - startMs}ms)`);
-  await page.setContent(html);
-  const screenshot = await page.screenshot({ type: 'png' });
-  console.log(`Screenshot taken (${Date.now() - startMs}ms)`);
-  const converted = await convertImage(screenshot);
-  console.log(`Image converted (${Date.now() - startMs}ms)`);
-  await context.close();
-  await browser.close();
-  console.log(`Image generated successfully in ${Date.now() - startMs}ms`);
-  return Buffer.from(converted);
+export interface ScreenConfig {
+  screenId: string;
+  refresh: number; // seconds
+  pluginId: string;
+  pluginConfig: object;
 }
 
-async function refreshCache(): Promise<void> {
-  console.log('Refreshing image cache...');
-  try {
-    cachedImage = await generateImage();
-    console.log('Image cache updated');
-  } catch (err) {
-    console.error('Failed to generate image:', err);
-  }
+interface Config {
+  baseUrl: string;
+  ha: {
+    baseUrl: string;
+    token: string;
+  };
+  screenConfigs: ScreenConfig[];
 }
+
+// ── Load config ──────────────────────────────────────────────────────────────
+
+const configPath = process.env.CONFIG_PATH ?? '/data/options.json';
+console.log(`Loading config from ${configPath}...`);
+
+let config: Config;
+try {
+  config = JSON.parse(readFileSync(configPath, 'utf-8')) as Config;
+} catch (err) {
+  throw new Error(`Failed to read config from ${configPath}: ${err}`);
+}
+
+console.log(
+  `Config loaded: baseUrl=${config.baseUrl}, screens=${config.screenConfigs.length}`,
+);
+
+// ── Orchestrator ─────────────────────────────────────────────────────────────
+
+const homeAssistantApi = new HomeAssistantApi(
+  config.ha.baseUrl,
+  config.ha.token,
+);
+
+const pluginFactory = new PluginFactory(homeAssistantApi);
+
+const orchestrator = new Orchestrator(
+  new Liquid({
+    root: new URL('./../templates', import.meta.url).pathname,
+    extname: '.liquid',
+  }),
+  pluginFactory,
+);
+
+console.log(`Attaching ${config.screenConfigs.length} screen(s)...`);
+for (const screen of config.screenConfigs) {
+  console.log(
+    `[${screen.screenId}] plugin=${screen.pluginId} refresh=${screen.refresh}s`,
+  );
+  await orchestrator.attachScreen(screen);
+}
+
+// ── HTTP server ───────────────────────────────────────────────────────────────
 
 const app = new Hono();
 
 app.use(logger());
 
 app.get('/api/setup', (c) => {
-  console.log('Headers:', c.req.header());
   return c.json({
     api_key: randomUUID(),
     friendly_id: randomUUID(),
-    image_url: 'url.com',
+    image_url: `${config.baseUrl}/api/image`,
     message: 'Hello from tiny-trmnl',
   });
 });
 
 app.get('/api/display', (c) => {
-  console.log('Serving image URL:', `${BASE_URL}/api/image`);
-  console.log(
-    'Cache status:',
-    cachedImage ? `${cachedImage.length} bytes` : 'empty',
-  );
+  const id = c.req.query('id') ?? config.screenConfigs[0]?.screenId;
+  if (!id) return c.json({ status: 1, error: 'No screens configured' }, 503);
+
+  const imageUrl = `${config.baseUrl}/api/image?id=${encodeURIComponent(id)}`;
+  console.log(`[${id}] Serving display → ${imageUrl}`);
 
   return c.json({
     status: 0,
-    image_url: `${BASE_URL}/api/image`,
-    filename: `${crypto.randomUUID()}.png`,
+    image_url: imageUrl,
+    filename: `${randomUUID()}.png`,
     update_firmware: false,
     firmware_url: 'https://trmnl-fw.s3.us-east-2.amazonaws.com/FW1.7.5.bin',
     refresh_rate: 600,
@@ -78,47 +100,34 @@ app.get('/api/display', (c) => {
 
 app.post('/api/log', async (c) => {
   const body = await c.req.text();
-  console.log('Received log request with body:', body);
+  console.log('Device log:', body);
   return c.body(null, 204);
 });
 
-app.get('/api/html', async (c) => {
-  console.log('Received HTML request');
-  const html = await renderCalendarHtml();
-  return c.html(html);
-});
+app.get('/api/html/:screenId', async (c) => {
+  const screenId = c.req.param('screenId');
 
-app.get('/api/image', async (c) => {
-  if (!cachedImage) {
-    console.warn('Image requested but cache is empty, returning 503');
-    return c.text('Image not yet generated, try again shortly', 503);
+  const screen = orchestrator.getScreen(screenId);
+  if (!screen) {
+    return c.text('Screen not found', 404);
+  } else {
+    c.html(screen.html);
   }
-  console.log(`Serving cached image (${cachedImage.length} bytes)`);
-  return c.body(new Uint8Array(cachedImage), 200, {
-    'content-type': 'image/png',
-  });
 });
 
-app.post('/api/refresh', async (c) => {
-  console.log('Received manual refresh request');
-  const before = Date.now();
-  await refreshCache();
-  console.log(`Manual refresh completed in ${Date.now() - before}ms`);
-  return c.text('OK', 200);
+app.get('/api/image/:screenId', (c) => {
+  const screenId = c.req.param('screenId');
+
+  const screen = orchestrator.getScreen(screenId);
+  if (!screen) {
+    return c.text('Screen not found', 404);
+  } else {
+    return c.body(new Uint8Array(screen.image), 200, {
+      'content-type': 'image/png',
+    });
+  }
 });
 
-serve(
-  {
-    fetch: app.fetch,
-    port: 8080,
-  },
-  async (info) => {
-    console.log('Triggering initial image generation...');
-    await refreshCache();
-    console.log(
-      `Scheduling image refresh every ${REFRESH_INTERVAL_MS / 1000 / 60} minutes`,
-    );
-    setInterval(refreshCache, REFRESH_INTERVAL_MS);
-    console.log(`Server is running on http://localhost:${info.port}`);
-  },
-);
+serve({ fetch: app.fetch, port: 8080 }, (info) => {
+  console.log(`Server running on http://localhost:${info.port}`);
+});

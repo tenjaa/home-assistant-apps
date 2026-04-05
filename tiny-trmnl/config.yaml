@@ -17,14 +17,43 @@ options:
   home_assistant_token: null
   home_assistant_base_url: "http://homeassistant.local:8123"
   base_url: "http://localhost:8080"
-  calendars:
-  - entity: calendar.my_calendar
-    label: "A"
+  templates:
+    - id: "family-calendar"
+      plugin: "calendar"
+      template: "calendar"
+      config:
+        calendars:
+          - entity: calendar.my_calendar
+            label: "A"
+    - id: "weather-my-town"
+      plugin: "weather"
+      template: "weather"
+      config:
+        locationName: "Bamberg, Germany"
+        latitude: 52.37052
+        longitude: 9.73322
+        timezone: "Europe/Berlin"
+    - id: "daily-quote"
+      plugin: "quote"
+      template: "quote"
 schema:
   home_assistant_token: "str"
   home_assistant_base_url: "str?"
   base_url: "str?"
-  calendars:
-  - entity: str
-    label: str
+  templates:
+    - id: str
+      plugin: str
+      template: str
+      config:
+        calendars:
+          - entity: "str?"
+            label: "str?"
+        locationName: "str?"
+        latitude: "float?"
+        longitude: "float?"
+        timezone: "str?"
+        title: "str?"
+        quotes:
+          - text: "str?"
+            author: "str?"
 image: "ghcr.io/tenjaa/tiny-trmnl-home-assistant"
