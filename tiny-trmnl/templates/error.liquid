@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://trmnl.com/css/2.3.7/plugins.css">
+    <script src="https://trmnl.com/js/2.3.7/plugins.js"></script>
+    <style>
+        .error-message {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            line-height: 1.2;
+        }
+    </style>
+</head>
+<body class="environment trmnl">
+<div class="screen">
+    <div class="view view--full">
+        <div class="layout">
+            <div class="columns">
+                <div class="column">
+                    <div class="markdown">
+                        <span class="title">Screen failed to load</span>
+                        <div class="content content--center error-message">{{ errorMessage | escape }}</div>
+                        <span class="label label--underline">{{ pluginId }} · {{ screenId }}</span>
+                        <span class="label">{{ renderedAt }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="title_bar">
+            <span class="title">Error</span>
+            <span class="instance">{{ screenId }}</span>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+

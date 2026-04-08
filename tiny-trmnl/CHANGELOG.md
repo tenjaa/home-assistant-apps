@@ -1,5 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 0.0.3
+
+- Don't crash if gathering data fails, just show an error message on the screen
+
 ## 0.0.2
 
 - Support multiple different screens

@@ -31,11 +31,48 @@ export class Orchestrator {
     );
   }
 
+  private normalizeErrorMessage(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message || error.name || 'Unknown error';
+    }
+
+    if (typeof error === 'string') {
+      return error;
+    }
+
+    try {
+      return JSON.stringify(error) || 'Unknown error';
+    } catch {
+      return String(error);
+    }
+  }
+
   private async generateImage(screen: Plugin): Promise<void> {
+    let templateName = screen.pluginId;
+    let data: object;
+
     console.log(`[${screen.screenId}] Gathering data...`);
-    const data = await screen.getData();
-    console.log(`[${screen.screenId}] Rendering template...`);
-    const html = await this.liquid.renderFile(screen.pluginId, data);
+    try {
+      data = await screen.getData();
+    } catch (error) {
+      const errorMessage = this.normalizeErrorMessage(error);
+      templateName = 'error';
+      data = {
+        errorMessage,
+        pluginId: screen.pluginId,
+        renderedAt: new Date().toISOString(),
+        screenId: screen.screenId,
+      };
+      console.error(
+        `[${screen.screenId}] Failed to gather data, rendering error screen instead: ${errorMessage}`,
+        error,
+      );
+    }
+
+    console.log(
+      `[${screen.screenId}] Rendering template ${templateName}.liquid...`,
+    );
+    const html = await this.liquid.renderFile(templateName, data);
 
     console.log(`[${screen.screenId}] Taking screenshot...`);
     const browser = await firefox.launch();
@@ -50,7 +87,7 @@ export class Orchestrator {
       const image = await convertImage(screenshot);
       this.cache.set(screen.screenId, { html, image });
       console.log(
-        `[${screen.pluginId}] Image cached (${image.byteLength} bytes)`,
+        `[${screen.screenId}] Image cached using ${templateName}.liquid (${image.byteLength} bytes)`,
       );
     } finally {
       await context.close();
