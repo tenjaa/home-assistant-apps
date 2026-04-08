@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: tiny-TRMNL add-on
-version: "0.0.1"
+version: "0.0.2"
 slug: tiny-trmnl
 description: local TRMNL server for Home Assistant
 url: "https://github.com/tenjaa/homeassistant-apps/tree/main/tiny-trmnl"
