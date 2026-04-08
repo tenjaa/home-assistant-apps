@@ -1,31 +1,50 @@
 import * as z from 'zod';
 import type { Plugin } from './plugin-factory.ts';
 
-interface OpenMeteoResponse {
-  current?: {
-    time: string;
-    temperature_2m: number;
-    apparent_temperature: number;
-    weather_code: number;
-    wind_speed_10m: number;
-  };
-  daily?: {
-    temperature_2m_max?: number[];
-    temperature_2m_min?: number[];
-    precipitation_probability_max?: number[];
-  };
+interface BrightskyHour {
+  timestamp: string;
+  temperature: number | null;
+  wind_speed: number | null;
+  wind_direction: number | null;
+  precipitation: number | null;
+  precipitation_probability: number | null;
+  precipitation_probability_6h: number | null;
+  cloud_cover: number | null;
+  condition: string | null;
+  icon: string | null;
 }
 
-function weatherCodeToText(code: number): string {
-  if (code === 0) return 'Clear';
-  if (code <= 3) return 'Cloudy';
-  if (code <= 48) return 'Fog';
-  if (code <= 67) return 'Rain';
-  if (code <= 77) return 'Snow';
-  if (code <= 82) return 'Showers';
-  if (code <= 86) return 'Snow showers';
-  if (code <= 99) return 'Thunderstorm';
-  return 'Unknown';
+interface BrightskyResponse {
+  weather: BrightskyHour[];
+}
+
+function iconToCondition(icon: string | null): string {
+  switch (icon) {
+    case 'clear-day':
+    case 'clear-night':
+      return 'Clear';
+    case 'partly-cloudy-day':
+    case 'partly-cloudy-night':
+      return 'Partly cloudy';
+    case 'cloudy':
+      return 'Cloudy';
+    case 'fog':
+      return 'Fog';
+    case 'wind':
+      return 'Windy';
+    case 'rain':
+      return 'Rain';
+    case 'sleet':
+      return 'Sleet';
+    case 'snow':
+      return 'Snow';
+    case 'hail':
+      return 'Hail';
+    case 'thunderstorm':
+      return 'Thunderstorm';
+    default:
+      return icon ?? 'Unknown';
+  }
 }
 
 export const ZodWeatherPluginConfig = z.object({
@@ -41,51 +60,56 @@ export class WeatherPlugin implements Plugin {
 
   constructor(
     readonly screenId: string,
-    private readonly pluginConfig: WeatherPluginConfig,
+    private readonly config: WeatherPluginConfig,
   ) {}
 
   async getData(): Promise<object> {
-    const url = new URL('https://api.open-meteo.com/v1/forecast');
-    url.searchParams.set('latitude', `${this.pluginConfig.latitude}`);
-    url.searchParams.set('longitude', `${this.pluginConfig.longitude}`);
-    url.searchParams.set(
-      'current',
-      'temperature_2m,apparent_temperature,weather_code,wind_speed_10m',
-    );
-    url.searchParams.set(
-      'daily',
-      'temperature_2m_max,temperature_2m_min,precipitation_probability_max',
-    );
-    url.searchParams.set('forecast_days', '1');
-    url.searchParams.set(
-      'timezone',
-      this.pluginConfig.timezone ?? 'Europe/Berlin',
-    );
+    const today = new Date().toISOString().slice(0, 10);
+    const url = new URL('https://api.brightsky.dev/weather');
+    url.searchParams.set('lat', `${this.config.latitude}`);
+    url.searchParams.set('lon', `${this.config.longitude}`);
+    url.searchParams.set('date', today);
+    if (this.config.timezone) {
+      url.searchParams.set('tz', this.config.timezone);
+    }
 
     const res = await fetch(url);
     if (!res.ok) {
-      throw new Error(`Weather API error: ${res.status} ${res.statusText}`);
+      throw new Error(`Brightsky API error: ${res.status} ${res.statusText}`);
     }
 
-    const payload = (await res.json()) as OpenMeteoResponse;
-    if (!payload.current) {
-      throw new Error('Weather API response missing current data');
+    const payload = (await res.json()) as BrightskyResponse;
+    const hours = payload.weather;
+    if (!hours || hours.length === 0) {
+      throw new Error('Brightsky API response missing weather data');
     }
+
+    // Find the closest hourly entry to now
+    const nowMs = Date.now();
+    const current = hours.reduce((closest, h) => {
+      const diff = Math.abs(new Date(h.timestamp).getTime() - nowMs);
+      const prevDiff = Math.abs(new Date(closest.timestamp).getTime() - nowMs);
+      return diff < prevDiff ? h : closest;
+    });
+
+    const temps = hours.map((h) => h.temperature).filter((t): t is number => t !== null);
+    const rainProbs = hours
+      .map((h) => h.precipitation_probability ?? h.precipitation_probability_6h)
+      .filter((p): p is number => p !== null);
 
     return {
-      location: this.pluginConfig.locationName,
+      location: this.config.locationName,
       current: {
-        temperatureC: payload.current.temperature_2m,
-        feelsLikeC: payload.current.apparent_temperature,
-        windSpeedKmh: payload.current.wind_speed_10m,
-        condition: weatherCodeToText(payload.current.weather_code),
-        updatedAt: payload.current.time,
+        temperatureC: current.temperature,
+        windSpeedKmh: current.wind_speed,
+        windDirection: current.wind_direction,
+        condition: iconToCondition(current.icon),
+        updatedAt: current.timestamp,
       },
       today: {
-        highC: payload.daily?.temperature_2m_max?.[0] ?? null,
-        lowC: payload.daily?.temperature_2m_min?.[0] ?? null,
-        precipitationChancePercent:
-          payload.daily?.precipitation_probability_max?.[0] ?? null,
+        highC: temps.length > 0 ? Math.max(...temps) : null,
+        lowC: temps.length > 0 ? Math.min(...temps) : null,
+        precipitationChancePercent: rainProbs.length > 0 ? Math.max(...rainProbs) : null,
       },
     };
   }
