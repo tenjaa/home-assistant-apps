@@ -14,4 +14,4 @@ RUN apt install -yy imagemagick
 
 COPY . .
 
-CMD ["node", "src/server.ts"]
+CMD ["node", "--experimental-transform-types", "src/server.ts"]
