@@ -1,5 +1,5 @@
+import type { ScreenConfig } from '../config.ts';
 import type { HomeAssistantApi } from '../home-assistant.ts';
-import type { ScreenConfig } from '../server.ts';
 import { CalendarPlugin, ZodCalendarPluginConfig } from './calendar.ts';
 import { QuotePlugin2 } from './quote.ts';
 import { WeatherPlugin, ZodWeatherPluginConfig } from './weather.ts';

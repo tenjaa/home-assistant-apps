@@ -1,50 +1,24 @@
 import { randomUUID } from 'node:crypto';
-import { readFileSync } from 'node:fs';
 import { serve } from '@hono/node-server';
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { Liquid } from 'liquidjs';
+import { loadRuntimeConfig } from './config.ts';
 import { HomeAssistantApi } from './home-assistant.ts';
 import { Orchestrator } from './orchestrator.ts';
 import { PluginFactory } from './plugins/plugin-factory.ts';
 
-export interface ScreenConfig {
-  screenId: string;
-  refresh: number; // seconds
-  pluginId: string;
-  pluginConfig: object;
-}
-
-interface Config {
-  baseUrl: string;
-  ha: {
-    baseUrl: string;
-    token: string;
-  };
-  screenConfigs: ScreenConfig[];
-}
-
 // ── Load config ──────────────────────────────────────────────────────────────
 
-const configPath = process.env.CONFIG_PATH ?? '/data/options.json';
-console.log(`Loading config from ${configPath}...`);
-
-let config: Config;
-try {
-  config = JSON.parse(readFileSync(configPath, 'utf-8')) as Config;
-} catch (err) {
-  throw new Error(`Failed to read config from ${configPath}: ${err}`);
-}
-
-console.log(
-  `Config loaded: baseUrl=${config.baseUrl}, screens=${config.screenConfigs.length}`,
-);
+const { appConfig, dataDir, screenConfigs, screensPath } = loadRuntimeConfig();
+console.log(`[config] Using data directory ${dataDir}`);
+console.log(`[config] Active screen config file ${screensPath}`);
 
 // ── Orchestrator ─────────────────────────────────────────────────────────────
 
 const homeAssistantApi = new HomeAssistantApi(
-  config.ha.baseUrl,
-  config.ha.token,
+  appConfig.ha.baseUrl,
+  appConfig.ha.token,
 );
 
 const pluginFactory = new PluginFactory(homeAssistantApi);
@@ -57,8 +31,8 @@ const orchestrator = new Orchestrator(
   pluginFactory,
 );
 
-console.log(`Attaching ${config.screenConfigs.length} screen(s)...`);
-for (const screen of config.screenConfigs) {
+console.log(`Attaching ${screenConfigs.length} screen(s)...`);
+for (const screen of screenConfigs) {
   console.log(
     `[${screen.screenId}] plugin=${screen.pluginId} refresh=${screen.refresh}s`,
   );
@@ -75,16 +49,16 @@ app.get('/api/setup', (c) => {
   return c.json({
     api_key: randomUUID(),
     friendly_id: randomUUID(),
-    image_url: `${config.baseUrl}/api/image`,
+    image_url: `${appConfig.baseUrl}/api/image`,
     message: 'Hello from tiny-trmnl',
   });
 });
 
 app.get('/api/display', (c) => {
-  const id = c.req.query('id') ?? config.screenConfigs[0]?.screenId;
+  const id = c.req.query('id') ?? 'error';
   if (!id) return c.json({ status: 1, error: 'No screens configured' }, 503);
 
-  const imageUrl = `${config.baseUrl}/api/image?id=${encodeURIComponent(id)}`;
+  const imageUrl = `${appConfig.baseUrl}/api/image?id=${encodeURIComponent(id)}`;
   console.log(`[${id}] Serving display → ${imageUrl}`);
 
   return c.json({

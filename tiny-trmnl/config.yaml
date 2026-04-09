@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: tiny-TRMNL add-on
-version: "0.0.4"
+version: "0.0.5"
 slug: tiny-trmnl
 description: local TRMNL server for Home Assistant
 url: "https://github.com/tenjaa/homeassistant-apps/tree/main/tiny-trmnl"
@@ -18,41 +18,9 @@ options:
   ha:
     baseUrl: "http://homeassistant.local:8123"
     token: ""
-  screenConfigs:
-    - screenId: "family-calendar"
-      refresh: 3600
-      pluginId: "calendar"
-      pluginConfig:
-        calendars:
-          - entity: "calendar.my_calendar"
-            label: "A"
-    - screenId: "weather-hannover"
-      refresh: 3600
-      pluginId: "weather"
-      pluginConfig:
-        locationName: "Hannover, Germany"
-        latitude: 52.3759
-        longitude: 9.732
-        timezone: "Europe/Berlin"
-    - screenId: "daily-quote"
-      refresh: 3600
-      pluginId: "quote"
-      pluginConfig: {}
 schema:
   baseUrl: "str"
   ha:
     baseUrl: "str"
     token: "str"
-  screenConfigs:
-    - screenId: "str"
-      refresh: "int"
-      pluginId: "str"
-      pluginConfig:
-        calendars?:
-          - entity: "str"
-            label: "str"
-        locationName?: "str"
-        latitude?: "float"
-        longitude?: "float"
-        timezone?: "str"
 image: "ghcr.io/tenjaa/tiny-trmnl-home-assistant"

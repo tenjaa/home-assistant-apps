@@ -1,13 +1,8 @@
 import type { Liquid } from 'liquidjs';
 import { firefox } from 'playwright';
+import type { ScreenConfig } from './config.ts';
 import { convertImage } from './image-magick.ts';
 import type { Plugin, PluginFactory } from './plugins/plugin-factory.ts';
-import type { ScreenConfig } from './server.ts';
-
-export interface HaConfig {
-  baseUrl: string;
-  token: string;
-}
 
 export class Orchestrator {
   private readonly cache = new Map<string, { html: string; image: Buffer }>();

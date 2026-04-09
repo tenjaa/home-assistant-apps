@@ -1,5 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 0.0.5
+
+- Move screen definitions out of Home Assistant add-on options into `/data/screens.json`
+- Create a demo `/data/screens.json` automatically on first run when none exists
+
 ## 0.0.4
 
 - Fix add-on option validation by switching to the new `baseUrl`/`ha`/`screenConfigs` config structure
