@@ -14,3 +14,9 @@ updates:
     interval: weekly
   cooldown:
     default-days: 7
+  groups:
+    hono:
+      patterns:
+      - "*hono*"
+  ignore:
+  - dependency-name: "@types/node" # should be kept in sync with mise.toml
