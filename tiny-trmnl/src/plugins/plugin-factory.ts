@@ -14,6 +14,10 @@ export interface Plugin {
 export class PluginFactory {
   constructor(private readonly ha: HomeAssistantApi) {}
 
+  validateScreenConfig(screenConfig: ScreenConfig): void {
+    void this.createScreen(screenConfig);
+  }
+
   createScreen(screenConfig: ScreenConfig): Plugin {
     switch (screenConfig.pluginId) {
       case 'quote':

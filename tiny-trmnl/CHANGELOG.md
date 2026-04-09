@@ -1,5 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 0.0.6
+
+- Add `POST /api/config/screens` to validate, persist, and hot-reload screen configs
+
 ## 0.0.5
 
 - Move screen definitions out of Home Assistant add-on options into `/data/screens.json`

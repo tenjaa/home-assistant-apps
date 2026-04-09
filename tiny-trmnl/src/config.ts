@@ -1,4 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join } from 'node:path';
 import * as z from 'zod';
 
@@ -95,6 +101,49 @@ function validateUniqueScreenIds(screenConfigs: ScreenConfig[]): void {
   }
 }
 
+export function parseScreenConfigs(rawScreenConfigs: unknown): ScreenConfig[] {
+  let screenConfigs: ScreenConfig[];
+  try {
+    screenConfigs = ZodScreenConfigs.parse(rawScreenConfigs);
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      throw new Error(formatValidationError(error));
+    }
+    throw error;
+  }
+
+  validateUniqueScreenIds(screenConfigs);
+
+  return screenConfigs;
+}
+
+export function loadScreenConfigs(screensPath: string): ScreenConfig[] {
+  ensureScreenConfigFile(screensPath);
+
+  console.log(`[config] Loading screen configs from ${screensPath}...`);
+  const rawScreenConfigs = readJsonFile(screensPath);
+
+  try {
+    return parseScreenConfigs(rawScreenConfigs);
+  } catch (error) {
+    throw new Error(`Invalid screen config in ${screensPath}: ${error}`);
+  }
+}
+
+export function writeScreenConfigs(
+  screensPath: string,
+  screenConfigs: ScreenConfig[],
+): void {
+  mkdirSync(dirname(screensPath), { recursive: true });
+
+  const tmpPath = `${screensPath}.tmp`;
+  writeFileSync(tmpPath, `${JSON.stringify(screenConfigs, null, 2)}\n`);
+  renameSync(tmpPath, screensPath);
+  console.log(
+    `[config] Stored ${screenConfigs.length} screen config(s) in ${screensPath}`,
+  );
+}
+
 export function loadRuntimeConfig(dataDir = process.env.DATA_DIR ?? '/data'): {
   appConfig: AppConfig;
   dataDir: string;
@@ -120,24 +169,7 @@ export function loadRuntimeConfig(dataDir = process.env.DATA_DIR ?? '/data'): {
     throw error;
   }
 
-  ensureScreenConfigFile(screensPath);
-
-  console.log(`[config] Loading screen configs from ${screensPath}...`);
-  const rawScreenConfigs = readJsonFile(screensPath);
-
-  let screenConfigs: ScreenConfig[];
-  try {
-    screenConfigs = ZodScreenConfigs.parse(rawScreenConfigs);
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      throw new Error(
-        `Invalid screen config in ${screensPath}: ${formatValidationError(error)}`,
-      );
-    }
-    throw error;
-  }
-
-  validateUniqueScreenIds(screenConfigs);
+  const screenConfigs = loadScreenConfigs(screensPath);
 
   console.log(
     `[config] Config loaded: baseUrl=${appConfig.baseUrl}, screens=${screenConfigs.length}`,

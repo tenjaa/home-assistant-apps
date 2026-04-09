@@ -6,11 +6,20 @@ import type { Plugin, PluginFactory } from './plugins/plugin-factory.ts';
 
 export class Orchestrator {
   private readonly cache = new Map<string, { html: string; image: Buffer }>();
+  private readonly refreshTimers = new Map<string, ReturnType<typeof setInterval>>();
 
   constructor(
     private readonly liquid: Liquid,
     private readonly pluginFactory: PluginFactory,
   ) {}
+
+  async replaceScreens(screenConfigs: ScreenConfig[]): Promise<void> {
+    this.clearScreens();
+
+    for (const screenConfig of screenConfigs) {
+      await this.attachScreen(screenConfig);
+    }
+  }
 
   async attachScreen(screenConfig: ScreenConfig): Promise<void> {
     const screen = this.pluginFactory.createScreen(screenConfig);
@@ -20,10 +29,21 @@ export class Orchestrator {
     console.log(
       `[${screenConfig.screenId}] Scheduling refresh every ${screenConfig.refresh}s`,
     );
-    setInterval(
+    const timer = setInterval(
       () => void this.generateImage(screen),
       screenConfig.refresh * 1000,
     );
+    this.refreshTimers.set(screenConfig.screenId, timer);
+  }
+
+  clearScreens(): void {
+    for (const [screenId, timer] of this.refreshTimers.entries()) {
+      clearInterval(timer);
+      console.log(`[${screenId}] Removed scheduled refresh`);
+    }
+
+    this.refreshTimers.clear();
+    this.cache.clear();
   }
 
   private normalizeErrorMessage(error: unknown): string {
