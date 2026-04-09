@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: tiny-TRMNL add-on
-version: "0.0.3"
+version: "0.0.4"
 slug: tiny-trmnl
 description: local TRMNL server for Home Assistant
 url: "https://github.com/tenjaa/homeassistant-apps/tree/main/tiny-trmnl"
@@ -14,46 +14,45 @@ ports_description:
 map:
   - share:rw
 options:
-  home_assistant_token: null
-  home_assistant_base_url: "http://homeassistant.local:8123"
-  base_url: "http://localhost:8080"
-  templates:
-    - id: "family-calendar"
-      plugin: "calendar"
-      template: "calendar"
-      config:
+  baseUrl: "http://localhost:8080"
+  ha:
+    baseUrl: "http://homeassistant.local:8123"
+    token: ""
+  screenConfigs:
+    - screenId: "family-calendar"
+      refresh: 3600
+      pluginId: "calendar"
+      pluginConfig:
         calendars:
-          - entity: calendar.my_calendar
+          - entity: "calendar.my_calendar"
             label: "A"
-    - id: "weather-my-town"
-      plugin: "weather"
-      template: "weather"
-      config:
-        locationName: "Bamberg, Germany"
-        latitude: 52.37052
-        longitude: 9.73322
+    - screenId: "weather-hannover"
+      refresh: 3600
+      pluginId: "weather"
+      pluginConfig:
+        locationName: "Hannover, Germany"
+        latitude: 52.3759
+        longitude: 9.732
         timezone: "Europe/Berlin"
-    - id: "daily-quote"
-      plugin: "quote"
-      template: "quote"
+    - screenId: "daily-quote"
+      refresh: 3600
+      pluginId: "quote"
+      pluginConfig: {}
 schema:
-  home_assistant_token: "str"
-  home_assistant_base_url: "str?"
-  base_url: "str?"
-  templates:
-    - id: str
-      plugin: str
-      template: str
-      config:
-        calendars:
-          - entity: "str?"
-            label: "str?"
-        locationName: "str?"
-        latitude: "float?"
-        longitude: "float?"
-        timezone: "str?"
-        title: "str?"
-        quotes:
-          - text: "str?"
-            author: "str?"
+  baseUrl: "str"
+  ha:
+    baseUrl: "str"
+    token: "str"
+  screenConfigs:
+    - screenId: "str"
+      refresh: "int"
+      pluginId: "str"
+      pluginConfig:
+        calendars?:
+          - entity: "str"
+            label: "str"
+        locationName?: "str"
+        latitude?: "float"
+        longitude?: "float"
+        timezone?: "str"
 image: "ghcr.io/tenjaa/tiny-trmnl-home-assistant"
