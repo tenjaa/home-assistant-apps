@@ -3,7 +3,7 @@ name: tiny-TRMNL add-on
 version: "0.0.5"
 slug: tiny-trmnl
 description: local TRMNL server for Home Assistant
-url: "https://github.com/tenjaa/homeassistant-apps/tree/main/tiny-trmnl"
+url: "https://github.com/tenjaa/home-assistant-apps/tree/main/tiny-trmnl"
 arch:
   - aarch64
 init: false
