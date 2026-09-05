@@ -9,3 +9,5 @@ node_modules/
 /.idea/
 /run.sh
 /tmp/
+/screens.json
+/update.sh
