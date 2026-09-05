@@ -27,7 +27,7 @@
         .container {
             column-count: 3;
             column-gap: 16px;
-            column-fill: auto;
+            column-fill: balance;
             height: 100%;
             overflow: hidden;
         }
@@ -42,6 +42,66 @@
             border-bottom: 2px solid #000;
             padding-bottom: 1px;
             margin-bottom: 2px;
+        }
+
+        @media (min-width: 1200px) {
+            .container {
+                column-count: 4;
+                column-gap: 24px;
+            }
+
+            .t-item {
+                margin-bottom: 24px;
+            }
+
+            .cal-day-header {
+                border-bottom-width: 3px;
+                padding-bottom: 2px;
+                margin-bottom: 3px;
+            }
+
+            .title--small {
+                font-size: 24px;
+                line-height: 1.15;
+            }
+
+            .index {
+                font-size: 22px;
+                line-height: 1.15;
+            }
+
+            .label--small {
+                font-size: 20px;
+                line-height: 1.2;
+            }
+        }
+
+        @media (min-width: 1600px) {
+            .container {
+                column-count: 5;
+                column-gap: 32px;
+            }
+
+            .t-item {
+                margin-bottom: 32px;
+            }
+
+            .cal-day-header {
+                border-bottom-width: 4px;
+                margin-bottom: 4px;
+            }
+
+            .title--small {
+                font-size: 32px;
+            }
+
+            .index {
+                font-size: 28px;
+            }
+
+            .label--small {
+                font-size: 24px;
+            }
         }
     </style>
 </head>

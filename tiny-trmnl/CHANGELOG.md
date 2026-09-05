@@ -1,5 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 0.0.8
+
+- Fill multiple calendar columns for wider screens
+
 ## 0.0.7
 
 - Allow configuring custom screen sizes
