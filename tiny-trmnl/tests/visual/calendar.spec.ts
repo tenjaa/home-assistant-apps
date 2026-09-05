@@ -53,6 +53,27 @@ test.describe('calendar image', () => {
       ).toEqual([]);
       expect(await page.evaluate(() => document.fonts.status)).toBe('loaded');
 
+      const layout = await page.evaluate(() => {
+        const container = document.querySelector('.container');
+        const items = [...document.querySelectorAll('.t-item')];
+
+        if (!container) {
+          throw new Error('Calendar container not found');
+        }
+
+        return {
+          containerWidth: container.getBoundingClientRect().width,
+          rightmostItem: Math.max(
+            ...items.map((item) => item.getBoundingClientRect().right),
+          ),
+        };
+      });
+
+      expect(layout.containerWidth).toBeGreaterThan(screen.width * 0.95);
+      if (screen.name === 'large') {
+        expect(layout.rightmostItem).toBeGreaterThan(screen.width * 0.7);
+      }
+
       const screenshot = await page.screenshot({
         animations: 'disabled',
         type: 'png',
