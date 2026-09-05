@@ -2,6 +2,10 @@
 
 ## 0.0.8
 
+- Fix large screen calendar layout
+
+## 0.0.8
+
 - Fill multiple calendar columns for wider screens
 
 ## 0.0.7
