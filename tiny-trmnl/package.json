@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.19.15",
-    "hono": "^4.12.10",
+    "hono": "^4.13.7",
     "liquidjs": "^10.27.1",
     "playwright": "^1.59.1",
     "zod": "^4.3.6"
