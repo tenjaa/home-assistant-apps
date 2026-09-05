@@ -8,11 +8,17 @@ import {
 import { dirname, join } from 'node:path';
 import * as z from 'zod';
 
+export interface ScreenSize {
+  readonly width: number;
+  readonly height: number;
+}
+
 export interface ScreenConfig {
   screenId: string;
   refresh: number; // seconds
   pluginId: string;
   pluginConfig: object;
+  screenSize: ScreenSize;
 }
 
 export interface AppConfig {
@@ -36,6 +42,16 @@ const ZodScreenConfig = z.object({
   refresh: z.int().positive(),
   pluginId: z.string().min(1),
   pluginConfig: z.object({}).catchall(z.unknown()).default({}),
+  screenSize: z
+    .object({
+      width: z.int().positive(),
+      height: z.int().positive(),
+    })
+    .optional()
+    .default({
+      width: 800,
+      height: 480,
+    }),
 });
 
 const ZodScreenConfigs = z.array(ZodScreenConfig);
@@ -46,6 +62,10 @@ const DEMO_SCREEN_CONFIGS: ScreenConfig[] = [
     pluginId: 'quote',
     refresh: 3600,
     pluginConfig: {},
+    screenSize: {
+      width: 800,
+      height: 480,
+    },
   },
   {
     screenId: 'weather-hannover',
@@ -56,6 +76,10 @@ const DEMO_SCREEN_CONFIGS: ScreenConfig[] = [
       latitude: 52.3759,
       longitude: 9.732,
       timezone: 'Europe/Berlin',
+    },
+    screenSize: {
+      width: 800,
+      height: 480,
     },
   },
 ];
@@ -94,7 +118,9 @@ function validateUniqueScreenIds(screenConfigs: ScreenConfig[]): void {
 
   for (const screenConfig of screenConfigs) {
     if (seen.has(screenConfig.screenId)) {
-      throw new Error(`Duplicate screenId found in screen config: ${screenConfig.screenId}`);
+      throw new Error(
+        `Duplicate screenId found in screen config: ${screenConfig.screenId}`,
+      );
     }
 
     seen.add(screenConfig.screenId);
@@ -183,5 +209,3 @@ export function loadRuntimeConfig(dataDir = process.env.DATA_DIR ?? '/data'): {
     screensPath,
   };
 }
-
-

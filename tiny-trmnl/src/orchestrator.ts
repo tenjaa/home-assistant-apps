@@ -1,12 +1,15 @@
 import type { Liquid } from 'liquidjs';
 import { firefox } from 'playwright';
-import type { ScreenConfig } from './config.ts';
+import type { ScreenConfig, ScreenSize } from './config.ts';
 import { convertImage } from './image-magick.ts';
 import type { Plugin, PluginFactory } from './plugins/plugin-factory.ts';
 
 export class Orchestrator {
   private readonly cache = new Map<string, { html: string; image: Buffer }>();
-  private readonly refreshTimers = new Map<string, ReturnType<typeof setInterval>>();
+  private readonly refreshTimers = new Map<
+    string,
+    ReturnType<typeof setInterval>
+  >();
 
   constructor(
     private readonly liquid: Liquid,
@@ -24,13 +27,15 @@ export class Orchestrator {
   async attachScreen(screenConfig: ScreenConfig): Promise<void> {
     const screen = this.pluginFactory.createScreen(screenConfig);
 
-    console.log(`[${screenConfig.screenId}] Initial screen generation...`);
-    await this.generateImage(screen);
+    console.log(
+      `[${screenConfig.screenId}] Initial screen generation at ${screenConfig.screenSize.width}x${screenConfig.screenSize.height}...`,
+    );
+    await this.generateImage(screen, screenConfig.screenSize);
     console.log(
       `[${screenConfig.screenId}] Scheduling refresh every ${screenConfig.refresh}s`,
     );
     const timer = setInterval(
-      () => void this.generateImage(screen),
+      () => void this.generateImage(screen, screenConfig.screenSize),
       screenConfig.refresh * 1000,
     );
     this.refreshTimers.set(screenConfig.screenId, timer);
@@ -62,7 +67,10 @@ export class Orchestrator {
     }
   }
 
-  private async generateImage(screen: Plugin): Promise<void> {
+  private async generateImage(
+    screen: Plugin,
+    screenSize: ScreenSize,
+  ): Promise<void> {
     let templateName = screen.pluginId;
     let data: object;
 
@@ -92,8 +100,8 @@ export class Orchestrator {
     console.log(`[${screen.screenId}] Taking screenshot...`);
     const browser = await firefox.launch();
     const context = await browser.newContext({
-      screen: { height: 480, width: 800 },
-      viewport: { height: 480, width: 800 },
+      screen: screenSize,
+      viewport: screenSize,
     });
     try {
       const page = await context.newPage();
