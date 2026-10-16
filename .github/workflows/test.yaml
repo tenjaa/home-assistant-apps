@@ -10,14 +10,15 @@ permissions:
 jobs:
   test:
     name: tiny-TRMNL tests
-    runs-on: macos-15
-    timeout-minutes: 15
+    runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: tiny-trmnl
     steps:
     - uses: actions/checkout@v7.0.1
     - uses: jdx/mise-action@v5.1.1
+      with:
+        working_directory: tiny-trmnl
     - run: npm ci
     - run: npx playwright install --with-deps firefox
     - run: brew install imagemagick
