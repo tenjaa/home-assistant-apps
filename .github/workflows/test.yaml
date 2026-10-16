@@ -17,7 +17,7 @@ jobs:
         working-directory: tiny-trmnl
     steps:
     - uses: actions/checkout@v7.0.1
-    - uses: jdx/mise-action@5.1.1
+    - uses: jdx/mise-action@v5.1.1
     - run: npm ci
     - run: npx playwright install --with-deps firefox
     - run: brew install imagemagick
