@@ -21,5 +21,4 @@ jobs:
         working_directory: tiny-trmnl
     - run: npm ci
     - run: npx playwright install --with-deps firefox
-    - run: brew install imagemagick
     - run: npm test
