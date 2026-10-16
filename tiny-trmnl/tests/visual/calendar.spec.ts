@@ -62,6 +62,7 @@ async function renderCalendar(browser: Browser, screen: Screen, data: object) {
       const entryBounds = entries.map((entry) => entry.getBoundingClientRect());
 
       return {
+        columnCount: getComputedStyle(container).columnCount,
         containerHeight: containerBounds.height,
         containerScrollHeight: container.scrollHeight,
         containerScrollWidth: container.scrollWidth,
@@ -120,6 +121,7 @@ test.describe('calendar image', () => {
         'all TRMNL styles, fonts, and images loaded',
       ).toEqual([]);
       expect(layout.fontStatus).toBe('loaded');
+      expect(layout.columnCount).toBe(screen.name === 'large' ? '4' : '3');
       expect(layout.containerWidth).toBeGreaterThan(screen.width * 0.95);
       if (screen.name === 'large') {
         expect(layout.rightmostItem).toBeGreaterThan(screen.width * 0.7);
@@ -142,6 +144,7 @@ test.describe('calendar image', () => {
         'all TRMNL styles, fonts, and images loaded',
       ).toEqual([]);
       expect(layout.fontStatus).toBe('loaded');
+      expect(layout.columnCount).toBe(screen.name === 'large' ? '4' : '3');
       expect(layout.totalItems).toBe(calendarOverflowData.days.length);
       expect(layout.totalEntries).toBe(
         calendarOverflowData.days.reduce(
