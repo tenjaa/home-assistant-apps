@@ -1,3 +1,9 @@
+import * as z from 'zod';
+
+const ZodCalendars = z.array(
+  z.object({ entity_id: z.string(), name: z.string() }),
+);
+
 export interface CalendarEvent {
   start: { date?: string; dateTime?: string };
   end: { date?: string; dateTime?: string };
@@ -14,6 +20,19 @@ export class HomeAssistantApi {
     private readonly baseUrl: string,
     private readonly token: string,
   ) {}
+
+  async fetchCalendars(): Promise<z.infer<typeof ZodCalendars>> {
+    const res = await fetch(`${this.baseUrl}/api/calendars`, {
+      headers: { Authorization: `Bearer ${this.token}` },
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!res.ok) {
+      throw new Error(
+        `Home Assistant calendar discovery failed: ${res.status} ${res.statusText}`,
+      );
+    }
+    return ZodCalendars.parse(await res.json());
+  }
 
   async fetchCalendarEvents(calendarId: string): Promise<CalendarEvent[]> {
     const start = new Date();

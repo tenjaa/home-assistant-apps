@@ -16,11 +16,21 @@ export class Orchestrator {
     private readonly pluginFactory: PluginFactory,
   ) {}
 
-  async replaceScreens(screenConfigs: ScreenConfig[]): Promise<void> {
-    this.clearScreens();
-
+  async replaceScreens(
+    screenConfigs: ScreenConfig[],
+    beforeCommit: () => void = () => {},
+  ): Promise<void> {
+    const prepared = [];
     for (const screenConfig of screenConfigs) {
-      await this.attachScreen(screenConfig);
+      const screen = this.pluginFactory.createScreen(screenConfig);
+      const result = await this.generateImage(screen, screenConfig.screenSize);
+      prepared.push({ screenConfig, screen, result });
+    }
+    beforeCommit();
+    this.clearScreens();
+    for (const { screenConfig, screen, result } of prepared) {
+      this.cache.set(screenConfig.screenId, result);
+      this.scheduleRefresh(screenConfig, screen);
     }
   }
 
@@ -30,14 +40,33 @@ export class Orchestrator {
     console.log(
       `[${screenConfig.screenId}] Initial screen generation at ${screenConfig.screenSize.width}x${screenConfig.screenSize.height}...`,
     );
-    await this.generateImage(screen, screenConfig.screenSize);
+    const result = await this.generateImage(screen, screenConfig.screenSize);
+    this.cache.set(screenConfig.screenId, result);
+    this.scheduleRefresh(screenConfig, screen);
+  }
+
+  private scheduleRefresh(screenConfig: ScreenConfig, screen: Plugin): void {
     console.log(
       `[${screenConfig.screenId}] Scheduling refresh every ${screenConfig.refresh}s`,
     );
-    const timer = setInterval(
-      () => void this.generateImage(screen, screenConfig.screenSize),
-      screenConfig.refresh * 1000,
-    );
+    let refreshing = false;
+    const timer = setInterval(async () => {
+      if (refreshing) return;
+      refreshing = true;
+      try {
+        const result = await this.generateImage(
+          screen,
+          screenConfig.screenSize,
+        );
+        if (this.refreshTimers.get(screenConfig.screenId) === timer) {
+          this.cache.set(screenConfig.screenId, result);
+        }
+      } catch (error) {
+        console.error(`[${screenConfig.screenId}] Refresh failed`, error);
+      } finally {
+        refreshing = false;
+      }
+    }, screenConfig.refresh * 1000);
     this.refreshTimers.set(screenConfig.screenId, timer);
   }
 
@@ -67,10 +96,11 @@ export class Orchestrator {
     }
   }
 
-  private async generateImage(
-    screen: Plugin,
-    screenSize: ScreenSize,
-  ): Promise<void> {
+  async preview(screenConfig: ScreenConfig): Promise<string> {
+    return this.renderScreen(this.pluginFactory.createScreen(screenConfig));
+  }
+
+  private async renderScreen(screen: Plugin): Promise<string> {
     let templateName = screen.pluginId;
     let data: object;
 
@@ -96,24 +126,27 @@ export class Orchestrator {
       `[${screen.screenId}] Rendering template ${templateName}.liquid...`,
     );
     const html = await this.liquid.renderFile(templateName, data);
+    return html;
+  }
 
+  private async generateImage(
+    screen: Plugin,
+    screenSize: ScreenSize,
+  ): Promise<{ html: string; image: Buffer }> {
+    const html = await this.renderScreen(screen);
     console.log(`[${screen.screenId}] Taking screenshot...`);
     const browser = await firefox.launch();
-    const context = await browser.newContext({
-      screen: screenSize,
-      viewport: screenSize,
-    });
     try {
+      const context = await browser.newContext({
+        screen: screenSize,
+        viewport: screenSize,
+      });
       const page = await context.newPage();
       await page.setContent(html);
       const screenshot = await page.screenshot({ type: 'png' });
       const image = await convertImage(screenshot);
-      this.cache.set(screen.screenId, { html, image });
-      console.log(
-        `[${screen.screenId}] Image cached using ${templateName}.liquid (${image.byteLength} bytes)`,
-      );
+      return { html, image };
     } finally {
-      await context.close();
       await browser.close();
     }
   }

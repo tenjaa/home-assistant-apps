@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: tiny-TRMNL
-version: "0.0.11"
+version: "0.0.12"
 slug: tiny-trmnl
 description: local TRMNL server for Home Assistant
 url: "https://github.com/tenjaa/home-assistant-apps/tree/main/tiny-trmnl"
@@ -11,6 +11,7 @@ ports:
   8080/tcp: 8080
 ports_description:
   8080/tcp: "tiny-TRMNL HTTP server"
+webui: "http://[HOST]:[PORT:8080]/"
 map:
   - share:rw
 options:

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>tiny-TRMNL Screens</title>
+    <link rel="stylesheet" href="ui/style.css">
+    <script src="ui/app.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <div><span class="eyebrow">tiny-TRMNL</span><h1>Your screens</h1>
+        <p>Configure your displays, choose their content, and preview changes.</p></div>
+      <button id="save" type="button" disabled>Save all changes</button>
+    </header>
+    <p id="status" role="status" aria-live="polite">Loading screens...</p>
+    <main id="workspace" hidden>
+      <aside class="panel">
+        <div class="heading"><h2>Screens</h2><button id="add" type="button" class="secondary">Add screen</button></div>
+        <nav id="screens" aria-label="Screens"></nav>
+        <p id="empty" hidden>No screens yet. Add a screen to get started.</p>
+        <p class="hint">Changes stay in this browser until you save. Saving updates every screen without a restart.</p>
+      </aside>
+      <section id="editor" class="panel" hidden aria-label="Screen settings">
+        <div class="heading"><h2>Screen settings</h2><button id="delete" type="button" class="danger">Delete screen</button></div>
+        <form id="form">
+          <fieldset id="fields">
+            <label>Screen ID<input name="screenId" required placeholder="kitchen-calendar"></label>
+            <p class="hint">A unique ID used in the display's image and HTML URLs.</p>
+            <div class="grid">
+              <label>Content<select name="pluginId" aria-label="Content"><option value="quote">Daily quote</option><option value="calendar">Calendar</option><option value="weather">Weather</option></select></label>
+              <label>Refresh interval (seconds)<input name="refresh" type="number" min="1" step="1" required></label>
+              <label>Width (pixels)<input name="width" type="number" min="1" step="1" required></label>
+              <label>Height (pixels)<input name="height" type="number" min="1" step="1" required></label>
+            </div>
+            <section id="calendar-settings" hidden>
+              <div class="heading"><h3>Calendars</h3><button id="reload-calendars" type="button" class="secondary">Reload calendars</button></div>
+              <p id="calendar-status" role="status"></p>
+              <div id="calendars"></div>
+              <button id="add-calendar" type="button" class="secondary">Add calendar</button>
+              <p class="hint">Choose available Home Assistant calendars, or enter an entity ID manually. Each calendar uses a one-character label.</p>
+            </section>
+            <section id="weather-settings" hidden>
+              <h3>Weather location</h3>
+              <label>Location name<input name="locationName"></label>
+              <div class="grid">
+                <label>Latitude<input name="latitude" type="number" step="any"></label>
+                <label>Longitude<input name="longitude" type="number" step="any"></label>
+              </div>
+              <label>Timezone (optional)<input name="timezone" placeholder="Europe/Berlin"></label>
+            </section>
+            <div class="actions"><button type="submit" class="secondary">Update preview</button><span class="hint">Preview does not save your changes.</span></div>
+          </fieldset>
+        </form>
+      </section>
+      <section id="preview-panel" class="panel" hidden aria-label="Screen preview">
+        <div class="heading"><h2>Preview</h2><span id="resolution" class="hint"></span></div>
+        <p id="preview-status" role="status">Select Update preview to render this screen.</p>
+        <div id="preview-container"><div id="preview-size"><iframe id="preview" title="Screen preview" sandbox="" hidden></iframe></div></div>
+        <p class="hint">HTML preview at your screen's dimensions. The display image is converted to monochrome when saved.</p>
+        <p id="endpoints" hidden><a id="image-link" target="_blank" rel="noopener">Display image</a> &middot; <a id="html-link" target="_blank" rel="noopener">Rendered HTML</a></p>
+      </section>
+    </main>
+  </body>
+</html>

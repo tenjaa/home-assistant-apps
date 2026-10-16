@@ -4,11 +4,11 @@ import { logger } from 'hono/logger';
 import { Liquid } from 'liquidjs';
 import {
   loadRuntimeConfig,
-  parseScreenConfigs,
   type ScreenConfig,
   writeScreenConfigs,
 } from './config.ts';
 import { HomeAssistantApi } from './home-assistant.ts';
+import { createManagementApp } from './management.ts';
 import { Orchestrator } from './orchestrator.ts';
 import { PluginFactory } from './plugins/plugin-factory.ts';
 
@@ -41,36 +41,6 @@ const orchestrator = new Orchestrator(
   pluginFactory,
 );
 
-function normalizeErrorMessage(error: unknown): string {
-  if (error instanceof Error) {
-    return error.message || error.name || 'Unknown error';
-  }
-
-  if (typeof error === 'string') {
-    return error;
-  }
-
-  try {
-    return JSON.stringify(error) || 'Unknown error';
-  } catch {
-    return String(error);
-  }
-}
-
-function extractPostedScreenConfigs(body: unknown): ScreenConfig[] {
-  if (Array.isArray(body)) {
-    return parseScreenConfigs(body);
-  }
-
-  if (body && typeof body === 'object' && 'screenConfigs' in body) {
-    return parseScreenConfigs(body.screenConfigs);
-  }
-
-  throw new Error(
-    'Expected request body to be an array of screen configs or an object with screenConfigs',
-  );
-}
-
 async function applyScreenConfigs(
   nextScreenConfigs: ScreenConfig[],
 ): Promise<void> {
@@ -78,8 +48,9 @@ async function applyScreenConfigs(
     pluginFactory.validateScreenConfig(screenConfig);
   }
 
-  writeScreenConfigs(screensPath, nextScreenConfigs);
-  await orchestrator.replaceScreens(nextScreenConfigs);
+  await orchestrator.replaceScreens(nextScreenConfigs, () =>
+    writeScreenConfigs(screensPath, nextScreenConfigs),
+  );
   screenConfigs = nextScreenConfigs;
 }
 
@@ -97,44 +68,17 @@ const app = new Hono();
 
 app.use(logger());
 
-app.post('/api/config/screens', async (c) => {
-  let body: unknown;
-  try {
-    body = await c.req.json();
-  } catch (error) {
-    const message = normalizeErrorMessage(error);
-    console.error(
-      `[config] Failed to parse posted screen config JSON: ${message}`,
-    );
-    return c.json({ error: `Invalid JSON body: ${message}` }, 400);
-  }
-
-  let nextScreenConfigs: ScreenConfig[];
-  try {
-    nextScreenConfigs = extractPostedScreenConfigs(body);
-  } catch (error) {
-    const message = normalizeErrorMessage(error);
-    console.error(`[config] Rejected posted screen config: ${message}`, error);
-    return c.json({ error: message }, 400);
-  }
-
-  try {
-    await applyScreenConfigs(nextScreenConfigs);
-  } catch (error) {
-    const message = normalizeErrorMessage(error);
-    console.error(`[config] Failed to apply screen config: ${message}`, error);
-    return c.json({ error: message }, 500);
-  }
-
-  console.log(
-    `[config] Applied ${nextScreenConfigs.length} screen config(s) from API`,
-  );
-  return c.json({
-    message: 'Screen config updated',
-    screenConfigs: nextScreenConfigs,
+app.route(
+  '/',
+  createManagementApp({
     screensPath,
-  });
-});
+    getScreens: () => screenConfigs,
+    validateScreen: (screen) => pluginFactory.validateScreenConfig(screen),
+    saveScreens: applyScreenConfigs,
+    preview: (screen) => orchestrator.preview(screen),
+    getCalendars: () => homeAssistantApi.fetchCalendars(),
+  }),
+);
 
 app.get('/api/html/:screenId', async (c) => {
   const screenId = c.req.param('screenId');

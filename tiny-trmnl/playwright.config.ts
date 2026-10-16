@@ -1,11 +1,11 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  testDir: './tests/visual',
+  testDir: './tests',
   fullyParallel: false,
   workers: 1,
   reporter: 'list',
-  snapshotPathTemplate: '{testDir}/snapshots/{arg}{ext}',
+  snapshotPathTemplate: '{testDir}/visual/snapshots/{arg}{ext}',
   expect: {
     toMatchSnapshot: {
       maxDiffPixelRatio: 0.025,
