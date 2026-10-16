@@ -1,0 +1,24 @@
+name: Test tiny-TRMNL
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: tiny-TRMNL tests
+    runs-on: macos-15
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: tiny-trmnl
+    steps:
+    - uses: actions/checkout@v7.0.1
+    - uses: jdx/mise-action@5.1.1
+    - run: npm ci
+    - run: npx playwright install --with-deps firefox
+    - run: brew install imagemagick
+    - run: npm test
