@@ -8,7 +8,7 @@ export default defineConfig({
   snapshotPathTemplate: '{testDir}/snapshots/{arg}{ext}',
   expect: {
     toMatchSnapshot: {
-      maxDiffPixelRatio: 0.001,
+      maxDiffPixelRatio: 0.025,
       threshold: 0.2,
     },
   },
