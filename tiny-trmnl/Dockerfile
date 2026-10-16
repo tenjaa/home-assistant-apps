@@ -14,4 +14,6 @@ RUN apt install -yy imagemagick
 
 COPY . .
 
+RUN node --input-type=module -e "import { firefox } from 'playwright'; const browser = await firefox.launch(); await browser.close();"
+
 CMD ["node", "--experimental-transform-types", "src/server.ts"]

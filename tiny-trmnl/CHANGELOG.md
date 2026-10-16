@@ -1,5 +1,10 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 0.0.11
+
+- Fix missing Firefox after Playwright updates by matching all Playwright versions
+- Verify Firefox launches during image builds
+
 ## 0.0.10
 
 - Use four calendar columns instead of five on screens at least 1600 pixels wide
