@@ -1,5 +1,9 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 0.0.10
+
+- Use four calendar columns instead of five on screens at least 1600 pixels wide
+
 ## 0.0.9
 
 - Fix large screen calendar layout
