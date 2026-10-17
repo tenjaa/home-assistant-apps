@@ -1,5 +1,11 @@
 <!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
 
+## 0.0.13
+- Handle calendar fetch failures gracefully instead of crashing
+
+## 0.0.12
+- WebUI to configure screen sizes and layouts
+
 ## 0.0.11
 
 - Fix missing Firefox after Playwright updates by matching all Playwright versions

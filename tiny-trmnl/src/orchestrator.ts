@@ -4,8 +4,25 @@ import type { ScreenConfig, ScreenSize } from './config.ts';
 import { convertImage } from './image-magick.ts';
 import type { Plugin, PluginFactory } from './plugins/plugin-factory.ts';
 
+interface ScreenImage {
+  html: string;
+  image: Buffer;
+}
+
+interface CachedScreen extends ScreenImage {
+  lastSuccessful?: ScreenImage;
+}
+
+const STALE_HINT = `<div role="status" style="position:fixed;bottom:0;left:0;z-index:2147483647;background:#fff;color:#000;border:1px solid #000;padding:3px 6px;font:12px/1.2 sans-serif">Update failed - showing previous image</div>`;
+
+function addStaleHint(html: string): string {
+  return html.includes('</body>')
+    ? html.replace('</body>', `${STALE_HINT}</body>`)
+    : `${html}${STALE_HINT}`;
+}
+
 export class Orchestrator {
-  private readonly cache = new Map<string, { html: string; image: Buffer }>();
+  private readonly cache = new Map<string, CachedScreen>();
   private readonly refreshTimers = new Map<
     string,
     ReturnType<typeof setInterval>
@@ -57,6 +74,7 @@ export class Orchestrator {
         const result = await this.generateImage(
           screen,
           screenConfig.screenSize,
+          this.cache.get(screenConfig.screenId),
         );
         if (this.refreshTimers.get(screenConfig.screenId) === timer) {
           this.cache.set(screenConfig.screenId, result);
@@ -97,18 +115,33 @@ export class Orchestrator {
   }
 
   async preview(screenConfig: ScreenConfig): Promise<string> {
-    return this.renderScreen(this.pluginFactory.createScreen(screenConfig));
+    const result = await this.renderScreen(
+      this.pluginFactory.createScreen(screenConfig),
+    );
+    return result.html;
   }
 
-  private async renderScreen(screen: Plugin): Promise<string> {
+  private async renderScreen(
+    screen: Plugin,
+    previous?: ScreenImage,
+  ): Promise<{ html: string; successful: boolean }> {
     let templateName = screen.pluginId;
     let data: object;
+    let successful = true;
 
     console.log(`[${screen.screenId}] Gathering data...`);
     try {
       data = await screen.getData();
     } catch (error) {
       const errorMessage = this.normalizeErrorMessage(error);
+      console.error(
+        `[${screen.screenId}] Failed to gather data, ${previous ? 'keeping previous image' : 'rendering error screen instead'}: ${errorMessage}`,
+        error,
+      );
+      if (previous) {
+        return { html: addStaleHint(previous.html), successful: false };
+      }
+      successful = false;
       templateName = 'error';
       data = {
         errorMessage,
@@ -116,24 +149,31 @@ export class Orchestrator {
         renderedAt: new Date().toISOString(),
         screenId: screen.screenId,
       };
-      console.error(
-        `[${screen.screenId}] Failed to gather data, rendering error screen instead: ${errorMessage}`,
-        error,
-      );
     }
 
     console.log(
       `[${screen.screenId}] Rendering template ${templateName}.liquid...`,
     );
     const html = await this.liquid.renderFile(templateName, data);
-    return html;
+    return { html, successful };
   }
 
   private async generateImage(
     screen: Plugin,
     screenSize: ScreenSize,
-  ): Promise<{ html: string; image: Buffer }> {
-    const html = await this.renderScreen(screen);
+    previous?: CachedScreen,
+  ): Promise<CachedScreen> {
+    const lastSuccessful = previous?.lastSuccessful;
+    const { html, successful } = await this.renderScreen(
+      screen,
+      lastSuccessful,
+    );
+    const screenshotHtml =
+      !successful && lastSuccessful
+        ? addStaleHint(
+            `<html><body style="margin:0;overflow:hidden"><img alt="Previous screen" src="data:image/png;base64,${lastSuccessful.image.toString('base64')}" style="display:block;width:100vw;height:100vh"></body></html>`,
+          )
+        : html;
     console.log(`[${screen.screenId}] Taking screenshot...`);
     const browser = await firefox.launch();
     try {
@@ -142,10 +182,14 @@ export class Orchestrator {
         viewport: screenSize,
       });
       const page = await context.newPage();
-      await page.setContent(html);
+      await page.setContent(screenshotHtml);
       const screenshot = await page.screenshot({ type: 'png' });
       const image = await convertImage(screenshot);
-      return { html, image };
+      return {
+        html,
+        image,
+        lastSuccessful: successful ? { html, image } : lastSuccessful,
+      };
     } finally {
       await browser.close();
     }
