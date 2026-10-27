@@ -16,7 +16,7 @@ jobs:
         working-directory: tiny-trmnl
     steps:
     - uses: actions/checkout@v7.0.1
-    - uses: jdx/mise-action@v5.1.2
+    - uses: jdx/mise-action@v5.2.1
       with:
         working_directory: tiny-trmnl
     - run: npm ci
