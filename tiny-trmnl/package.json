@@ -18,7 +18,7 @@
     "typescript": "^7.0.2"
   },
   "dependencies": {
-    "@hono/node-server": "^2.1.4",
+    "@hono/node-server": "^2.1.5",
     "hono": "^4.13.13",
     "liquidjs": "^10.30.0",
     "playwright": "^1.64.1",
