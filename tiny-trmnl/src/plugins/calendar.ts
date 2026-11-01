@@ -143,7 +143,9 @@ function deduplicateEntries(entries: DayEntry[]): DayEntry[] {
   return deduplicatedEntries;
 }
 
-function buildCalendarData(sources: { events: CalendarEvent[]; label: string }[]) {
+function buildCalendarData(
+  sources: { events: CalendarEvent[]; label: string }[],
+) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 

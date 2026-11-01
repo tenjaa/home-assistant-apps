@@ -1,7 +1,6 @@
 import type { ScreenConfig } from '../config.ts';
 import type { HomeAssistantApi } from '../home-assistant.ts';
 import { CalendarPlugin, ZodCalendarPluginConfig } from './calendar.ts';
-import { QuotePlugin2 } from './quote.ts';
 import { WeatherPlugin, ZodWeatherPluginConfig } from './weather.ts';
 
 export interface Plugin {
@@ -20,8 +19,6 @@ export class PluginFactory {
 
   createScreen(screenConfig: ScreenConfig): Plugin {
     switch (screenConfig.pluginId) {
-      case 'quote':
-        return new QuotePlugin2(screenConfig.screenId);
       case 'calendar':
         return new CalendarPlugin(
           screenConfig.screenId,

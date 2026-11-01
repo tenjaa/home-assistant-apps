@@ -92,7 +92,9 @@ export class WeatherPlugin implements Plugin {
       return diff < prevDiff ? h : closest;
     });
 
-    const temps = hours.map((h) => h.temperature).filter((t): t is number => t !== null);
+    const temps = hours
+      .map((h) => h.temperature)
+      .filter((t): t is number => t !== null);
     const rainProbs = hours
       .map((h) => h.precipitation_probability ?? h.precipitation_probability_6h)
       .filter((p): p is number => p !== null);
@@ -109,7 +111,8 @@ export class WeatherPlugin implements Plugin {
       today: {
         highC: temps.length > 0 ? Math.max(...temps) : null,
         lowC: temps.length > 0 ? Math.min(...temps) : null,
-        precipitationChancePercent: rainProbs.length > 0 ? Math.max(...rainProbs) : null,
+        precipitationChancePercent:
+          rainProbs.length > 0 ? Math.max(...rainProbs) : null,
       },
     };
   }
