@@ -1,4 +1,4 @@
-<!-- https://developers.home-assistant.io/docs/add-ons/presentation#keeping-a-changelog -->
+<!-- https://contributors.home-assistant.io/apps/guides/presentation/#changelog -->
 
 ## 0.0.13
 
